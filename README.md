@@ -78,13 +78,12 @@ Inverted residual + SE variant (recommended for higher capacity):
 
 ```bash
 SIZE=32x24
+VAR=s
 uv run python -m hsc train \
 --data_root data/dataset.parquet \
---output_dir runs/hsc_is_s_${SIZE} \
+--output_dir runs/hsc_is_${VAR}_${SIZE} \
 --epochs 100 \
 --batch_size 256 \
---train_ratio 0.9 \
---val_ratio 0.1 \
 --train_resampling balanced \
 --image_size ${SIZE} \
 --base_channels 32 \
