@@ -56,7 +56,7 @@ uv run python 01_build_smile_parquet.py
 Baseline depthwise-separable CNN:
 
 ```bash
-SIZE=28x28
+SIZE=48x48
 uv run python -m hsc train \
 --data_root data/dataset.parquet \
 --output_dir runs/hsc_${SIZE} \
@@ -75,7 +75,7 @@ uv run python -m hsc train \
 Inverted residual + SE variant (recommended for higher capacity):
 
 ```bash
-SIZE=28x28
+SIZE=48x48
 VAR=s
 uv run python -m hsc train \
 --data_root data/dataset.parquet \
@@ -96,7 +96,7 @@ uv run python -m hsc train \
 ConvNeXt-style backbone with transformer head over pooled tokens:
 
 ```bash
-SIZE=28x28
+SIZE=48x48
 uv run python -m hsc train \
 --data_root data/dataset.parquet \
 --output_dir runs/hsc_convnext_${SIZE} \
@@ -108,7 +108,7 @@ uv run python -m hsc train \
 --num_blocks 4 \
 --arch_variant convnext \
 --head_variant transformer \
---token_mixer_grid 2x2 \
+--token_mixer_grid 3x3 \
 --seed 42 \
 --device auto \
 --use_amp
