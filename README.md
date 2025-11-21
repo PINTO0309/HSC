@@ -15,6 +15,10 @@ https://github.com/user-attachments/assets/f4a68c3a-ed66-4823-a910-e5719a665821
 |M|1.7 MB|0.8144|0.85 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_m_48x48.onnx)|
 |L|6.4 MB|0.8293|1.03 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_l_48x48.onnx)|
 
+|1|2|3|4|
+|:-:|:-:|:-:|:-:|
+|<img width="48" height="48" alt="image" src="https://github.com/user-attachments/assets/c14e1566-6a2c-49fd-8835-2cdbafd9959c" />|<img width="48" height="48" alt="image" src="https://github.com/user-attachments/assets/a6dc9668-fa5b-46a3-8787-361dd7371e79" />|<img width="48" height="48" alt="image" src="https://github.com/user-attachments/assets/9e29ae46-c7e6-437f-8b5c-6c235478b2e5" />|<img width="48" height="48" alt="image" src="https://github.com/user-attachments/assets/165ff7e1-caf1-4948-93cb-2d45c93e4c66" />|
+
 ## Setup
 
 ```bash
