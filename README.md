@@ -136,7 +136,7 @@ uv run python -m hsc exportonnx \
 --opset 17
 ```
 
-- The saved graph exposes `images` as input and `prob_pointing` as output (batch dimension is dynamic); probabilities can be consumed directly.
+- The saved graph exposes `images` as input and `prob_smiling` as output (batch dimension is dynamic); probabilities can be consumed directly.
 - After exporting, the tool runs `onnxsim` for simplification and rewrites any remaining BatchNormalization nodes into affine `Mul`/`Add` primitives. If simplification fails, a warning is emitted and the unsimplified model is preserved.
 
 ## Arch
