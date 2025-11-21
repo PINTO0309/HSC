@@ -131,8 +131,8 @@ uv run python -m hsc train \
 
 ```bash
 uv run python -m hsc exportonnx \
---checkpoint runs/hsc_is_s_28x28/hsc_best_epoch0049_f1_0.9939.pt \
---output hsc_s_28x28.onnx \
+--checkpoint runs/hsc_is_s_48x48/hsc_best_epoch0049_f1_0.9939.pt \
+--output hsc_s_48x48.onnx \
 --opset 17
 ```
 
