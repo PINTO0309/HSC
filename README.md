@@ -5,6 +5,16 @@ Happy smile classifier. The estimation is done on the entire head, 48x48 pixels,
 
 https://github.com/user-attachments/assets/f4a68c3a-ed66-4823-a910-e5719a665821
 
+|Variant|Size|F1|CPU<br>inference<br>latency|ONNX|
+|:-:|:-:|:-:|:-:|:-:|
+|P|115 KB||0.13 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_p_32x24.onnx)|
+|N|176 KB||0.24 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_n_32x24.onnx)|
+|T|280 KB||0.31 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_t_32x24.onnx)|
+|S|495 KB||0.35 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_s_32x24.onnx)|
+|C|876 KB||0.47 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_c_32x24.onnx)|
+|M|1.7 MB||0.55 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_m_32x24.onnx)|
+|L|6.4 MB||0.73 ms|[Download](https://github.com/PINTO0309/HSC/releases/download/onnx/hsc_l_32x24.onnx)|
+
 ## Setup
 
 ```bash
