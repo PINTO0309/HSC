@@ -1,5 +1,7 @@
 # HSC
-Happy smile classifier.
+Happy smile classifier. The estimation is done on the entire head, 48x48 pixels, rather than the face.
+
+https://github.com/user-attachments/assets/f4a68c3a-ed66-4823-a910-e5719a665821
 
 ## Setup
 
