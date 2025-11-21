@@ -49,8 +49,8 @@ EDGES = [
     (31, 32), (31, 32),  # knee -> ankle (left and right)
 ]
 
-BODY_LONG_HISTORY_SIZE = 7
-BODY_SHORT_HISTORY_SIZE = 4
+BODY_LONG_HISTORY_SIZE = 10
+BODY_SHORT_HISTORY_SIZE = 6
 SMILING_LABEL = '!! Smiling !!'
 SMILING_COLOR = (0, 210, 0)  # readable green for smiling label/bounding boxes
 
