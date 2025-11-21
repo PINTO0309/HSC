@@ -14,13 +14,13 @@ source .venv/bin/activate
 
 ```bash
 uv run python demo_hsc.py \
--hm hsc_c_32x24.onnx \
+-hm hsc_l_48x48.onnx \
 -v 0 \
 -ep cuda \
 -dlr -dnm -dgm -dhm -dhd
 
 uv run python demo_hsc.py \
--hm hsc_c_32x24.onnx \
+-hm hsc_l_48x48.onnx \
 -v 0 \
 -ep tensorrt \
 -dlr -dnm -dgm -dhm -dhd
