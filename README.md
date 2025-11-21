@@ -151,6 +151,7 @@ uv run python -m hsc exportonnx \
 
 ## Arch
 
+<img width="350" alt="hsc_p_48x48" src="https://github.com/user-attachments/assets/b3c79843-004d-4b12-a51a-34d707242f6c" />
 
 ## Ultra-lightweight classification model series
 1. [VSDLM: Visual-only speech detection driven by lip movements](https://github.com/PINTO0309/VSDLM) - MIT License
