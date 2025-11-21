@@ -160,9 +160,9 @@ If you find this project useful, please consider citing:
   month     = {11},
   year      = {2025},
   publisher = {Zenodo},
-  doi       = {10.5281/zenodo.17625710},
+  doi       = {10.5281/zenodo.17670546},
   url       = {https://github.com/PINTO0309/hsc},
-  abstract  = {Ultrafast sitting classification.},
+  abstract  = {Happy smile classifier.},
 }
 ```
 
