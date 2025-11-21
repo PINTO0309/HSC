@@ -51,7 +51,8 @@ EDGES = [
 
 BODY_LONG_HISTORY_SIZE = 7
 BODY_SHORT_HISTORY_SIZE = 4
-SITTING_LABEL = '!! Sitting !!'
+SMILING_LABEL = '!! Smiling !!'
+SMILING_COLOR = (0, 210, 0)  # readable green for smiling label/bounding boxes
 
 class Color(Enum):
     BLACK          = '\033[30m'
@@ -104,6 +105,9 @@ class Box():
     body_prob_sitting: float = -1.0
     body_state: int = -1  # -1: Unknown, 0: not_sitting, 1: sitting
     body_label: str = ''
+    head_prob_smiling: float = -1.0
+    head_state: int = -1  # -1: Unknown, 0: not_smiling, 1: smiling
+    head_label: str = ''
 
 
 class BodyStateHistory:
@@ -832,12 +836,12 @@ class DEIMv2(AbstractModel):
         iou = inter_area / float(area1 + area2 - inter_area)
         return iou
 
-class SC(AbstractModel):
+class HSC(AbstractModel):
     def __init__(
         self,
         *,
         runtime: Optional[str] = 'onnx',
-        model_path: Optional[str] = 'pgc_l.onnx',
+        model_path: Optional[str] = 'hsc_l_48x48.onnx',
         providers: Optional[List] = None,
     ):
         super().__init__(
@@ -877,12 +881,12 @@ class SC(AbstractModel):
 
     def __call__(self, image: np.ndarray) -> float:
         if image is None or image.size == 0:
-            raise ValueError('Input image for PGC is empty.')
+            raise ValueError('Input image for HSC is empty.')
         resized_image = self._preprocess(image=image)
         inference_image = np.asarray([resized_image], dtype=self._input_dtypes[0])
         outputs = super().__call__(input_datas=[inference_image])
-        prob_sitting = float(np.squeeze(outputs[0]))
-        return float(np.clip(prob_sitting, 0.0, 1.0))
+        prob_smiling = float(np.squeeze(outputs[0]))
+        return float(np.clip(prob_smiling, 0.0, 1.0))
 
     def _preprocess(
         self,
@@ -892,7 +896,7 @@ class SC(AbstractModel):
         height = self._input_height
         width = self._input_width
         if height <= 0 or width <= 0:
-            raise ValueError('Invalid target size for PGC preprocessing.')
+            raise ValueError('Invalid target size for HSC preprocessing.')
         resized = cv2.resize(image, (width, height), interpolation=cv2.INTER_LINEAR)
         resized = resized.astype(np.float32) / 255.0
         resized = resized.transpose(self._swap)
@@ -1108,11 +1112,11 @@ def main():
         help='ONNX/TFLite file path for DEIMv2.',
     )
     parser.add_argument(
-        '-sm',
-        '--sc_model',
+        '-hm',
+        '--hsc_model',
         type=str,
-        default='sc_s.onnx',
-        help='ONNX file path for the SC sitting classifier.',
+        default='hsc_l_48x48.onnx',
+        help='ONNX file path for the HSC smiling classifier.',
     )
     group_v_or_i = parser.add_mutually_exclusive_group(required=True)
     group_v_or_i.add_argument(
@@ -1349,7 +1353,7 @@ def main():
     inference_type = inference_type.lower()
     bounding_box_line_width: int = args.bounding_box_line_width
     camera_horizontal_fov: int = args.camera_horizontal_fov
-    sc_model_file: str = args.sc_model
+    hsc_model_file: str = args.hsc_model
     providers: List[Tuple[str, Dict] | str] = None
 
     if execution_provider == 'cpu':
@@ -1410,11 +1414,12 @@ def main():
         keypoint_th=keypoint_threshold,
         providers=providers,
     )
-    sitting_classifier = SC(
+    hsc_classifier = HSC(
         runtime='onnx',
-        model_path=sc_model_file,
+        model_path=hsc_model_file,
         providers=providers,
     )
+    use_head_crops = Path(hsc_model_file).name == 'hsc_l_48x48.onnx'
 
     file_paths: List[str] = None
     cap = None
@@ -1444,13 +1449,14 @@ def main():
     colored_line_width = white_line_width - 1
     tracker = SimpleSortTracker()
     sitting_tracker = SimpleSortTracker()
+    head_tracker = SimpleSortTracker()
     track_color_cache: Dict[int, np.ndarray] = {}
-    body_state_histories: Dict[int, BodyStateHistory] = {}
-    def get_sitting_history(track_id: int) -> BodyStateHistory:
-        history = body_state_histories.get(track_id)
+    state_histories: Dict[int, BodyStateHistory] = {}
+    def get_state_history(track_id: int) -> BodyStateHistory:
+        history = state_histories.get(track_id)
         if history is None:
             history = BodyStateHistory(body_long_history_size, body_short_history_size)
-            body_state_histories[track_id] = history
+            state_histories[track_id] = history
         return history
     tracking_enabled_prev = enable_tracking
     while True:
@@ -1480,10 +1486,11 @@ def main():
             disable_headpose_identification_mode=disable_headpose_identification_mode,
         )
         elapsed_time = time.perf_counter() - start_time
-        for box in boxes:
-            if box.classid != 0:
-                continue
-            body_crop = crop_image_with_margin(
+        body_boxes = [box for box in boxes if box.classid == 0]
+        head_boxes = [box for box in boxes if box.classid == 7]
+        target_boxes = head_boxes if use_head_crops else body_boxes
+        for box in target_boxes:
+            crop = crop_image_with_margin(
                 image=image,
                 box=box,
                 margin_top=0,
@@ -1491,25 +1498,28 @@ def main():
                 margin_left=0,
                 margin_right=0,
             )
-            if body_crop is None or body_crop.size == 0:
+            if crop is None or crop.size == 0:
                 continue
-            rgb_body_crop = cv2.cvtColor(body_crop, cv2.COLOR_BGR2RGB)
+            rgb_crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
             try:
-                prob_sitting = sitting_classifier(image=rgb_body_crop)
+                prob_smiling = hsc_classifier(image=rgb_crop)
             except Exception:
                 continue
-            box.body_prob_sitting = prob_sitting
-            box.body_state = 1 if prob_sitting >= 0.50 else 0
+            box.head_prob_smiling = prob_smiling
+            box.head_state = 1 if prob_smiling >= 0.50 else 0
 
-        body_boxes = [box for box in boxes if box.classid == 0]
         sitting_tracker.update(body_boxes)
-        matched_sitting_track_ids: set[int] = set()
-        for body_box in body_boxes:
-            if body_box.track_id <= 0:
+        head_tracker.update(head_boxes)
+
+        state_boxes = target_boxes
+        state_tracker = head_tracker if use_head_crops else sitting_tracker
+        matched_state_track_ids: set[int] = set()
+        for state_box in state_boxes:
+            if state_box.track_id <= 0:
                 continue
-            matched_sitting_track_ids.add(body_box.track_id)
-            history = get_sitting_history(body_box.track_id)
-            detection_state = bool(body_box.body_state == 1)
+            matched_state_track_ids.add(state_box.track_id)
+            history = get_state_history(state_box.track_id)
+            detection_state = bool(state_box.head_state == 1)
             history.append(detection_state)
             (
                 state_interval_judgment,
@@ -1521,16 +1531,16 @@ def main():
             )
             history.interval_active = state_interval_judgment
             if state_interval_judgment:
-                history.label = SITTING_LABEL
+                history.label = SMILING_LABEL
             elif state_end_judgment:
                 history.label = ''
-            body_box.body_label = history.label
-            body_box.body_state = 1 if history.interval_active else 0
+            state_box.head_label = history.label
+            state_box.head_state = 1 if history.interval_active else 0
 
-        current_sitting_track_ids = {track['id'] for track in sitting_tracker.tracks}
-        unmatched_sitting_track_ids = current_sitting_track_ids - matched_sitting_track_ids
-        for track_id in unmatched_sitting_track_ids:
-            history = get_sitting_history(track_id)
+        current_state_track_ids = {track['id'] for track in state_tracker.tracks}
+        unmatched_state_track_ids = current_state_track_ids - matched_state_track_ids
+        for track_id in unmatched_state_track_ids:
+            history = get_state_history(track_id)
             history.append(False)
             (
                 state_interval_judgment,
@@ -1542,13 +1552,13 @@ def main():
             )
             history.interval_active = state_interval_judgment
             if state_interval_judgment:
-                history.label = SITTING_LABEL
+                history.label = SMILING_LABEL
             elif state_end_judgment:
                 history.label = ''
 
-        stale_history_ids = [track_id for track_id in list(body_state_histories.keys()) if track_id not in current_sitting_track_ids]
+        stale_history_ids = [track_id for track_id in list(state_histories.keys()) if track_id not in current_state_track_ids]
         for track_id in stale_history_ids:
-            body_state_histories.pop(track_id, None)
+            state_histories.pop(track_id, None)
 
         if file_paths is None:
             cv2.putText(debug_image, f'{elapsed_time*1000:.2f} ms', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
@@ -1593,10 +1603,10 @@ def main():
                         color = (139,116,225)
                     else:
                         # Unknown
-                        color = (0,200,255) if box.body_state == 1 else (0,0,255)
+                        color = (0,200,255) if box.head_state == 1 else (0,0,255)
                 else:
                     # Body
-                    color = (0,200,255) if box.body_state == 1 else (0,0,255)
+                    color = (0,200,255) if box.head_state == 1 else (0,0,255)
             elif classid == 5:
                 # Body-With-Wheelchair
                 color = (0,200,255)
@@ -1609,6 +1619,8 @@ def main():
                     color = BOX_COLORS[box.head_pose][0] if box.head_pose != -1 else (216,67,21)
                 else:
                     color = (0,0,255)
+                if box.head_label:
+                    color = SMILING_COLOR
             elif classid == 16:
                 # Face
                 color = (0,200,255)
@@ -1740,7 +1752,7 @@ def main():
                 cv2.rectangle(debug_image, (box.x1, box.y1), (box.x2, box.y2), color, colored_line_width)
 
             # TrackID text
-            if enable_trackid_overlay and classid == 0 and box.track_id > 0:
+            if enable_trackid_overlay and classid in (0, 7) and box.track_id > 0:
                 track_text = f'ID: {box.track_id}'
                 text_x = max(box.x1 - 5, 0)
                 text_y = box.y1 - 30
@@ -1793,11 +1805,16 @@ def main():
 
             headpose_txt = BOX_COLORS[box.head_pose][1] if box.head_pose != -1 else ''
             attr_txt = f'{attr_txt} {headpose_txt}' if headpose_txt != '' else f'{attr_txt}'
-            sitting_label_active = classid == 0 and bool(box.body_label)
-            if classid == 0:
-                attr_txt = f'{box.body_label} {box.body_prob_sitting:.3f}' if box.body_label else f'{box.body_prob_sitting:.3f}'
+            smiling_label_active = classid in (0, 7) and bool(box.head_label)
+            if classid in (0, 7):
+                if box.head_label or (box.head_prob_smiling is not None and box.head_prob_smiling >= 0.0):
+                    attr_txt = f'{box.head_label} {box.head_prob_smiling:.3f}' if box.head_label else f'{box.head_prob_smiling:.3f}'
+                else:
+                    attr_txt = ''
 
-            attr_color = (0, 0, 255) if sitting_label_active else color
+            attr_color = SMILING_COLOR if smiling_label_active else color
+            if attr_txt == '':
+                continue
             cv2.putText(
                 debug_image,
                 f'{attr_txt}',
