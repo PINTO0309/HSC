@@ -143,6 +143,7 @@ uv run python -m hsc exportonnx \
 2. [OCEC: Open closed eyes classification. Ultra-fast wink and blink estimation model](https://github.com/PINTO0309/OCEC) - MIT License
 3. [PGC: Ultrafast pointing gesture classification](https://github.com/PINTO0309/PGC) - MIT License
 4. [SC: Ultrafast sitting classification](https://github.com/PINTO0309/SC) - MIT License
+5. [HSC: Happy smile classifier](https://github.com/PINTO0309/HSC) - MIT License
 
 ## Citation
 
