@@ -52,7 +52,7 @@ uv run python demo_hsc.py \
 uv run python 01_build_smile_parquet.py
 ```
 
-<img width="400" alt="class_composition_pie" src="https://github.com/user-attachments/assets/ff3ddacb-7c25-4994-929a-258a9a22221e" />
+<img width="400" alt="class_composition_pie" src="https://github.com/user-attachments/assets/b0db4a3d-a737-4998-be6b-3b6668054ff1" />
 
 ## Training Pipeline
 
