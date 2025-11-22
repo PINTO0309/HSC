@@ -52,6 +52,8 @@ uv run python demo_hsc.py \
 uv run python 01_build_smile_parquet.py
 ```
 
+<img width="400" alt="class_composition_pie" src="https://github.com/user-attachments/assets/ff3ddacb-7c25-4994-929a-258a9a22221e" />
+
 ## Training Pipeline
 
 - Use the images located under `dataset/output/002_xxxx_front_yyyyyy` together with their annotations in `dataset/output/002_xxxx_front.csv`.
